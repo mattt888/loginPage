@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adatbázis user hozzáadás</title>
+</head>
+<body>
+    <fieldset>
+        <legend>Jelenlegi userek</legend>
+        <table cellpadding="5" border="1" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Művelet</th>
+                    <th>Létrehozás dátuma</th>
+                    <th>Módosítás dátuma</th>
+                    <!-- <th>Jelszó</th> -->
+                </tr>
+            </thead>
+            <tbody>
+                <% list.forEach(user => { %>
+                    <form action="/update/<%=user.id%>" method="post">
+                        <tr>
+                            <td><%= user.id %></td>
+                            <td> <input type="text" name="name"  value="<%= user.name %>"> </td>
+                            <td> <input type="text" name="email" value="<%= user.email %>"> </td>
+                            <td> <a href="/delete/<%= user.id %>">Törlés </a>  <button> Frissítés </button> </td>
+                            <td><%= user.created_at.toLocaleString('hu-HU') %></td>
+                            <td>
+                                <% if (user.updated_at == null) { %>
+                                    <%= user.created_at.toLocaleString('hu-HU') %>
+                                <% } else { %>
+                                    <%= user.updated_at.toLocaleString('hu-HU') %>
+                                <% } %>
+                            </td>
+                            <!-- <td>< %= user.updated_at.toLocaleString('hu-HU') %></td> -->
+                            <!-- <td>< %= user.password %></td> -->
+                        </tr>
+                    </form>
+                <% }) %>
+            </tbody>
+        </table>
+    </fieldset>
+    <br>
+
+    <fieldset>
+        <legend>Új user felvétele</legend>
+        <form action="" method="post">
+            <input type="text" name="name" placeholder="Add meg a neved">
+            <br><br>
+            <input type="text" name="email" placeholder="Add meg az email címed">
+            <br><br>
+            <input type="text" name="password" placeholder="Add meg a jelszavad">
+            <br><br>
+            <button>Küldés</button>
+        </form>
+    </fieldset>
+
+    <br> <br>
+    <fieldset>  </fieldset>
+    <br> <br>
+    <fieldset>  </fieldset>
+</body>
+</html>
