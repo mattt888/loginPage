@@ -3,6 +3,18 @@ var app = express()
 var mysql = require('mysql')
 var bcrypt = require('bcrypt')
 
+var session = require('express-session');
+var flash = require('express-flash');
+
+app.use(session({
+    secret: 'titkos-kulcs-01234',
+    resave: false,
+    saveUninitialized: true,
+  }));
+
+// A flash session middleware hozzáadása
+app.use(flash());
+
 app.set("view engine", "ejs")
 app.use(express.urlencoded({extended:true}))
 
@@ -19,6 +31,7 @@ connection.connect( err => {
 
 app.get('/', (req,res)=> {
     connection.query("select * from users", (err, results) => {
+        console.log("results:", results);
         res.render('index', {list: results})
     })
 })
@@ -51,6 +64,70 @@ app.get('/', (req,res)=> {
             })
         }
     });
+})
+
+app.get('/register', (req,res)=> {
+        res.render('register')
+})
+
+.post('/register-process', (req, res) => {
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    const {name, email, password} = req.body
+
+    bcrypt.hash(password, 10, (err, hash) => {
+        if (err) {
+            console.error('Hashing error:', err);  // Kezeljük a hiba esetét
+            return res.end('Hiba a hash-ben: ', err.stack)
+        } else {
+            connection.query("insert into users (name, email, password) values (?,?,?)", [name, email, hash], function(err, results){
+                if (err) return res.json(err)
+                return res.redirect("back")
+            })
+        }
+    });
+})
+
+.get('/login', (req,res)=> {
+    // console.log("req.flash('error'):", req.flash('error'));
+    // console.log("req.flash('email'):", req.flash('email'));
+    res.render('login', { errors: req.flash('error'), email: req.flash('email') })
+})
+
+.post("/login-process", (req,res) => {
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    // res.json( req.body )
+    const {email, password} = req.body
+    connection.query("select * from users where email = ?", [req.body.email], (err, results) => {
+       if ( results.length === 0 ) {
+            console.log("req.body:", req.body);
+            console.log('email:', email);
+            console.log('password:', password);
+            console.log("results:", results);
+            console.log("---------------------------------------------------------------------------------");
+            req.flash('error', "Nincs ilyen email cím az adatbázisban!")
+            req.flash('email', email)
+            // res.end("Nincs ilyen email cím az adatbázisban!")
+            return res.redirect('back')
+       } else {
+            bcrypt.compare( req.body.password, results[0].password, (err, result) => {
+                if (result) {
+                    console.log("req.body.password:", req.body.password);
+                    console.log("results[0].password:", results[0].password);
+                    console.log("result:", result);
+                    console.log("------------------------------------------------------------------------------");
+                    res.end('Itt a belépés ideje és helye')
+                } else {
+                    console.log("req.body.password:", req.body.password);
+                    console.log("results[0].password:", results[0].password);
+                    console.log("result:", result);
+                    console.log("------------------------------------------------------------------------------");
+                    req.flash('error', "Hibás jelszó!")
+                    req.flash('email', email)
+                    return res.redirect('back')
+                }
+            })
+        }
+    })
 })
 
 .get("/delete/:id", (req, response) => {
