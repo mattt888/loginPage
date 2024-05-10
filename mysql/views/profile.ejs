@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <% if (errors.length > 0) { %>
+        <% errors.forEach( err => { %>
+            <li><%= err %></li>
+        <% }) %>
+    <% } else if (success.length > 0) { %>
+        <% success.forEach( succ => { %>
+            <li><%= succ %></li>
+        <% }) %>
+    <% } %>
+
+    <h3>Profilom</h3>
+    <p>Belépve mint <%= authUser.name %>, kilépéshez <a href="/logout">kattints ide</a>!</p>
+</body>
+</html>

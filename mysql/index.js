@@ -26,12 +26,38 @@ var connection = mysql.createConnection({
     password: ''
 })
 
+function onlyUsers (req, res, next) {
+    if ( typeof req.session.authUserId ==='undefined' || !req.session.authUserId ) {
+        console.log('typeof req.session.authUserId === undefined:', typeof req.session.authUserId ==='undefined')
+        console.log('!req.session.authUserId:', !req.session.authUserId)
+        // ha nem vagy bejelentkezve akkor nem tudod megtekinteni a profilodat
+        // ha nem vagy bejelentkezve akkor kilépni sem tudsz hiszen nincs honnan kilépni
+        // res.end('Nem vagy belépve!')
+        req.flash('error', 'Az oldal belépés nélkül nem látogatható!')
+        res.redirect('/login')
+        return
+    }
+    next()
+}
+
+function onlyGuests (req, res, next) {
+    if ( typeof req.session.authUserId !=='undefined') {
+        console.log('typeof req.session.authUserId !== undefined:', typeof req.session.authUserId !=='undefined')
+        // ha nem vagy bejelentkezve akkor kilépni sem tudsz hiszen nincs honnan kilépni
+        // res.end('Nem vagy belépve!')
+        req.flash('error', 'Az oldal belépett állapotban nem látogatható!')
+        res.redirect('/profile')
+        return
+    }
+    next()
+}
+
 connection.connect( err => {
     if (err) return console.error('Hiba a kapcsolatban')
 
-app.get('/', (req,res)=> {
+app.get('/', (req,res) => {
     connection.query("select * from users", (err, results) => {
-        console.log("results:", results);
+        // console.log("results:", results);
         res.render('index', {list: results})
     })
 })
@@ -66,11 +92,11 @@ app.get('/', (req,res)=> {
     });
 })
 
-app.get('/register', (req,res)=> {
+.get('/register', onlyGuests, (req,res)=> {
         res.render('register')
 })
 
-.post('/register-process', (req, res) => {
+.post('/register-process', onlyGuests, (req, res) => {
     res.set('Content-Type', 'text/html; charset=utf-8');
     const {name, email, password} = req.body
 
@@ -87,13 +113,13 @@ app.get('/register', (req,res)=> {
     });
 })
 
-.get('/login', (req,res)=> {
-    // console.log("req.flash('error'):", req.flash('error'));
-    // console.log("req.flash('email'):", req.flash('email'));
-    res.render('login', { errors: req.flash('error'), email: req.flash('email') })
+.get('/login', onlyGuests, (req,res) => {
+    console.log("req.flash('error'):", req.flash('error'));
+    console.log("req.flash('email'):", req.flash('email'));
+    res.render('login', { errors: req.flash('error'), email: req.flash('email'), success: req.flash('success') })
 })
 
-.post("/login-process", (req,res) => {
+.post("/login-process", onlyGuests, (req,res) => {
     res.set('Content-Type', 'text/html; charset=utf-8');
     // res.json( req.body )
     const {email, password} = req.body
@@ -102,24 +128,28 @@ app.get('/register', (req,res)=> {
             console.log("req.body:", req.body);
             console.log('email:', email);
             console.log('password:', password);
-            console.log("results:", results);
+            console.log("results= eredménytábla:", results);
             console.log("---------------------------------------------------------------------------------");
             req.flash('error', "Nincs ilyen email cím az adatbázisban!")
             req.flash('email', email)
             // res.end("Nincs ilyen email cím az adatbázisban!")
             return res.redirect('back')
        } else {
-            bcrypt.compare( req.body.password, results[0].password, (err, result) => {
-                if (result) {
+            bcrypt.compare( req.body.password, results[0].password, (err, compareResults) => {
+                if (compareResults) {
                     console.log("req.body.password:", req.body.password);
                     console.log("results[0].password:", results[0].password);
-                    console.log("result:", result);
+                    console.log("compareResults:", compareResults);
                     console.log("------------------------------------------------------------------------------");
-                    res.end('Itt a belépés ideje és helye')
+                   req.session.authUserId = results[0].id
+                   console.log("results= eredménytábla:", results);
+                   console.log('results[0]:', results[0]);
+                   console.log('results[0].id:', results[0].id);
+                   return res.redirect('/profile')
                 } else {
                     console.log("req.body.password:", req.body.password);
                     console.log("results[0].password:", results[0].password);
-                    console.log("result:", result);
+                    console.log("compareResults:", compareResults);
                     console.log("------------------------------------------------------------------------------");
                     req.flash('error', "Hibás jelszó!")
                     req.flash('email', email)
@@ -128,6 +158,21 @@ app.get('/register', (req,res)=> {
             })
         }
     })
+})
+
+.get('/profile', onlyUsers, (req,res) => {
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    connection.query("select * from users where id = ?", [req.session.authUserId], (err, results) => {
+        res.render('profile', {authUser: results[0], errors: req.flash('error'), success: req.flash('success') })
+   })
+})
+
+.get('/logout', onlyUsers, (req,res) => {
+    console.log('typeof req.session.authUserId === undefined:', typeof req.session.authUserId ==='undefined')
+    console.log('!req.session.authUserId:', !req.session.authUserId)
+    delete req.session.authUserId
+    req.flash('success', 'Sikeresen kiléptél!')
+    return res.redirect('/login')
 })
 
 .get("/delete/:id", (req, response) => {

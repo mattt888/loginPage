@@ -11,6 +11,11 @@
         <% errors.forEach( err => { %>
             <li><%= err %></li>
         <% }) %>
+
+    <% } else if (success.length > 0) { %>
+        <% success.forEach( succ => { %>
+            <li><%= succ %></li>
+        <% }) %>
     <% } %>
     
     <% console.log('email:', email) %>
