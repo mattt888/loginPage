@@ -7,6 +7,7 @@
 </head>
 <body>
     <% if (errors.length > 0) { %>
+        <% console.log('Profile.ejs fájlban az errors tartalma:', errors) %>
         <% errors.forEach( err => { %>
             <li><%= err %></li>
         <% }) %>
@@ -18,5 +19,33 @@
 
     <h3>Profilom</h3>
     <p>Belépve mint <%= authUser.name %>, kilépéshez <a href="/logout">kattints ide</a>!</p>
+
+    <fieldset>
+        <legend>Saját adataim, Módosítás</legend>
+        <form action="/profile-process" method="post">
+
+            <label for="">Név:</label>
+            <br>
+            <input type="text" name="name" placeholder="Add meg a neved" value="<%= authUser.name %>">
+            <br><br>
+
+            <label for="">Email:</label>
+            <br>
+            <input type="text" name="email" placeholder="Add meg az email címed" value="<%= authUser.email %>">
+            <br><br>
+
+            <!-- <label for="">Jelszó (csak akkor ha meg szeretnéd változtatni):</label>
+            <br>
+            <input type="text" name="password" placeholder="Add meg a jelszavad">
+            <br><br>
+
+            <label for="">Jelszó megerősítése:</label>
+            <br>
+            <input type="text" name="password_confirmation" placeholder="Add meg a jelszavad ismét">
+            <br><br> -->
+
+            <button>Küldés</button>
+        </form>
+    </fieldset>
 </body>
 </html>

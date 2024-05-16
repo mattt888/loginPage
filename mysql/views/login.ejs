@@ -17,18 +17,19 @@
             <li><%= succ %></li>
         <% }) %>
     <% } %>
-    
+
     <% console.log('email:', email) %>
     <fieldset>
         <legend>Belépés</legend>
         <form action="/login-process" method="post">
             <label for="email">Email:</label>
             <br>
-            <input type="text" name="email" id="email" placeholder="Add meg az email címed" value="<%=email%>">
+            <input type="text" name="email" id="email" placeholder="Add meg az email címed" value="11">
+            <!-- <input type="text" name="email" id="email" placeholder="Add meg az email címed" value="< %=email%>" value="uk"> -->
             <br>
             <label for="password">Jelszó:</label>
             <br>
-            <input type="text" name="password" id="password" placeholder="Add meg a jelszavad">
+            <input type="text" name="password" id="password" placeholder="Add meg a jelszavad" value="11">
             <br><br>
             <button>Belépés</button>
         </form>

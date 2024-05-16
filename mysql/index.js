@@ -114,8 +114,9 @@ app.get('/', (req,res) => {
 })
 
 .get('/login', onlyGuests, (req,res) => {
-    console.log("req.flash('error'):", req.flash('error'));
-    console.log("req.flash('email'):", req.flash('email'));
+    // ez a 2 sor kikommentelve kell h maradjon:
+    // console.log("req.flash('error'):", req.flash('error'));
+    // console.log("req.flash('email'):", req.flash('email'));
     res.render('login', { errors: req.flash('error'), email: req.flash('email'), success: req.flash('success') })
 })
 
@@ -128,7 +129,7 @@ app.get('/', (req,res) => {
             console.log("req.body:", req.body);
             console.log('email:', email);
             console.log('password:', password);
-            console.log("results= eredménytábla:", results);
+            // console.log("results= eredménytábla:", results);
             console.log("---------------------------------------------------------------------------------");
             req.flash('error', "Nincs ilyen email cím az adatbázisban!")
             req.flash('email', email)
@@ -137,14 +138,15 @@ app.get('/', (req,res) => {
        } else {
             bcrypt.compare( req.body.password, results[0].password, (err, compareResults) => {
                 if (compareResults) {
+                    console.log("POST login-process kezdete---------------------------------------------");
                     console.log("req.body.password:", req.body.password);
                     console.log("results[0].password:", results[0].password);
                     console.log("compareResults:", compareResults);
-                    console.log("------------------------------------------------------------------------------");
                    req.session.authUserId = results[0].id
-                   console.log("results= eredménytábla:", results);
-                   console.log('results[0]:', results[0]);
+                //    console.log("results= eredménytábla:", results);
+                //    console.log('results[0]:', results[0]);
                    console.log('results[0].id:', results[0].id);
+                   console.log("POST login-process VÉGE---------------------------------------------");
                    return res.redirect('/profile')
                 } else {
                     console.log("req.body.password:", req.body.password);
@@ -164,7 +166,37 @@ app.get('/', (req,res) => {
     res.set('Content-Type', 'text/html; charset=utf-8');
     connection.query("select * from users where id = ?", [req.session.authUserId], (err, results) => {
         res.render('profile', {authUser: results[0], errors: req.flash('error'), success: req.flash('success') })
+        console.log('GET /profile KEZDETE: ---------------------------------------')
+        console.log('results[0]:', results[0])
+        console.log('GET /profile VÉGE: ---------------------------------------')
    })
+})
+
+.post('/profile-process', onlyUsers, (req, res) => {
+    console.log('POST /profile KEZDETE: ---------------------------------------')
+
+    const {name, email} = req.body
+    connection.query("select id from users where email = ? and id != ? ", [email, req.session.authUserId ], (err, results) => {
+        if (results.length > 0) {  // ha a results.length nagyobb mint 0 akkor az azt jelenti hogy van ilyen felhasználó aki már használja ezt az emailt
+            req.flash('error', 'Az email cím már használatban van!')
+            console.log('req.body:', req.body)	
+            console.log('results post /profile-process:', results)
+            console.log('results[0]:', results[0])
+            console.log('POST /profile VÉGE: ---------------------------------------')
+            return res.render('profile', {authUser: req.body, errors: req.flash('error') })
+
+        } else {
+            connection.query("update users set name = ?, email = ? where id = ?", [name, email, req.session.authUserId], (err, results) => {
+                if ( err ) {
+                    return res.json(err.stack)
+                }
+                req.flash('success', 'Sikeres módosítás!')
+                // return res.redirect('back')
+                console.log('POST /profile VÉGE: ---------------------------------------')
+                return res.render('profile', {authUser: req.body, errors: req.flash('error'), success: req.flash('success') })
+            })
+        }
+    })
 })
 
 .get('/logout', onlyUsers, (req,res) => {
